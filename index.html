@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notre Petit Mot</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #faf5f5; color: #2d3748; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 1rem; box-sizing: border-box; }
+    .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; width: 100%; max-width: 360px; }
+    h1 { font-size: 1.2rem; color: #e53e3e; margin-bottom: 1.5rem; }
+    .message-box { background: #fff5f5; border-radius: 12px; padding: 1.2rem; font-size: 1.1rem; line-height: 1.5; color: #4a5568; min-height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
+    textarea { width: 100%; height: 80px; border-radius: 10px; border: 1px solid #e2e8f0; padding: 10px; box-sizing: border-box; font-family: inherit; resize: none; margin-bottom: 10px; font-size: 0.95rem; }
+    button { background: #e53e3e; color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s; }
+    button:active { background: #c53030; }
+    details { margin-top: 1rem; text-align: left; }
+    summary { cursor: pointer; color: #a0aec0; font-size: 0.85rem; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1 id="title">Chargement...</h1>
+    <div class="message-box" id="message">...</div>
+
+    <details>
+      <summary>Répondre ou changer le mot</summary>
+      <div style="margin-top: 12px;">
+        <textarea id="newMessage" placeholder="Écris ton petit mot ici..."></textarea>
+        <button onclick="updateMessage()">Envoyer</button>
+      </div>
+    </details>
+  </div>
+
+  <script>
+    const BIN_ID = "6a981e9cda38895dfe2f5ebd";
+    const API_KEY = "$2a$10$MBtt/1efHm3PzJShUPfAJe57C5klRxfRUSpamh33FsvwFX6r//p2u";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const view = urlParams.get('view') || 'elle';
+
+    document.getElementById('title').innerText = view === 'elle' ? "❤️ Petit mot pour toi" : "❤️ Petit mot pour moi";
+
+    async function fetchMessage() {
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': API_KEY }
+      });
+      const data = await res.json();
+      const field = view === 'elle' ? 'message_pour_elle' : 'message_pour_toi';
+      document.getElementById('message').innerText = data.record[field] || "Pas encore de message.";
+    }
+
+    async function updateMessage() {
+      const txt = document.getElementById('newMessage').value;
+      if (!txt) return;
+
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': API_KEY }
+      });
+      const data = await res.json();
+      
+      // On met à jour le champ de L'AUTRE personne
+      const targetField = view === 'elle' ? 'message_pour_toi' : 'message_pour_elle';
+      data.record[targetField] = txt;
+
+      await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': API_KEY
+        },
+        body: JSON.stringify(data.record)
+      });
+
+      alert("Message mis à jour !");
+      document.getElementById('newMessage').value = '';
+      fetchMessage();
+    }
+
+    fetchMessage();
+  </script>
+</body>
+</html>
